@@ -1,0 +1,7 @@
+{
+  "name": "PixelHeart Mood Garden",
+  "description": "A cute, retro pixel-art themed mood journal designed for a special someone to express their feelings and receive AI-powered mood boosters.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
