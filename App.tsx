@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { analyzeMood, MoodAnalysis } from './services/geminiService';
 import { Memory } from './types';
-import { saveMemory, getMemories, exportMemoriesToCSV } from './services/db';
+import { saveMemory, getMemories } from './services/db';
 import LoadingScreen from './components/LoadingScreen';
 import PasswordScreen from './components/PasswordScreen';
 
@@ -90,9 +89,6 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'APP'>('LOADING');
 
   // State
-  const [visuals, setVisuals] = useState<MoodAnalysis>({
-    mouth: '', eyes: '', eyebrows: '', bgColor: 'FFF0F5', summary: ''
-  });
   const [inputMood, setInputMood] = useState('');
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -259,34 +255,20 @@ const App: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      let currentSummary = visuals.summary;
-      // Use existing wishes text if no AI summary generated yet
-      if (wishes.length > 0 && !currentSummary) {
+      // Use user input or existing wishes as summary
+      let currentSummary = inputMood.trim();
+      if (!currentSummary && wishes.length > 0) {
         currentSummary = wishes.map(w => w.text).join(". ");
       }
-
-      // 1. Analyze mood if provided and no wishes yet
-      // Use user input if present
-      if (inputMood.trim()) {
-        try {
-          const result = await analyzeMood(inputMood);
-          setVisuals(result);
-          currentSummary = result.summary;
-
-          if (result.summary) {
-            const newWish = createWish(result.summary, wishes.length);
-            setWishes(prev => [...prev, newWish]);
-          }
-        } catch (e) {
-          console.error("AI Analysis failed, continuing", e);
-          currentSummary = inputMood;
-        }
-      }
-
-      // If still empty, default date
       if (!currentSummary) currentSummary = "A quiet moment.";
 
-      // 2. Save to DB
+      // Add as sticky note if typed something
+      if (inputMood.trim()) {
+        const newWish = createWish(inputMood, wishes.length);
+        setWishes(prev => [...prev, newWish]);
+      }
+
+      // Save to DB
       const newMemory: Memory = {
         id: Date.now().toString(),
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -301,7 +283,7 @@ const App: React.FC = () => {
       setMemories(updatedMemories);
       setStreak(calculateStreak(updatedMemories));
 
-      // 3. Reset after a delay so she can read the note
+      // Reset after delay
       setTimeout(() => {
         retakePhoto();
         setInputMood('');
