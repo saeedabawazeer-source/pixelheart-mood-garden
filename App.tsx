@@ -113,6 +113,7 @@ const App: React.FC = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Memory | null>(null);
   const [streak, setStreak] = useState(0);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   // --- Init ---
   useEffect(() => {
@@ -324,10 +325,17 @@ const App: React.FC = () => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
+  const goToPrevMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
   const renderCalendar = () => {
-    const today = new Date();
-    const daysInMonth = getDaysInMonth(today);
-    const firstDay = getFirstDayOfMonth(today);
+    const daysInMonth = getDaysInMonth(calendarMonth);
+    const firstDay = getFirstDayOfMonth(calendarMonth);
     const days = [];
 
     // Empty cells for offset
@@ -337,12 +345,10 @@ const App: React.FC = () => {
 
     // Days
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateToCheck = new Date(today.getFullYear(), today.getMonth(), d);
-      // This matching is imperfect if we only store "MMM D" but fine for current simple requirement
+      const dateToCheck = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d);
       const dateStr = dateToCheck.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
       // Find memories for this day
-      // Note: This string comparision is fragile across years, but ok for MVP
       const dayMemories = memories.filter(m => m.date === dateStr);
       const hasMemory = dayMemories.length > 0;
       const latestMemory = dayMemories[0];
@@ -353,12 +359,12 @@ const App: React.FC = () => {
           <button
             key={d}
             onClick={() => setSelectedDate(latestMemory)}
-            className="group relative flex flex-col bg-white border-2 border-black p-1 pb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:rotate-2 transition-all cursor-pointer overflow-hidden"
+            className="group relative flex flex-col bg-white border-2 border-black p-0.5 pb-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:rotate-2 transition-all cursor-pointer overflow-hidden"
           >
             <div className="w-full aspect-square border border-black/20 bg-gray-100 overflow-hidden relative">
               <img src={latestMemory.imageUrl} className="w-full h-full object-cover" alt="day thumbnail" />
             </div>
-            <span className="absolute bottom-0 left-0 right-0 text-center font-['Caveat'] font-bold text-sm text-black">{d}</span>
+            <span className="absolute bottom-0 left-0 right-0 text-center font-['Caveat'] font-bold text-xs text-black">{d}</span>
           </button>
         );
       } else {
@@ -366,7 +372,7 @@ const App: React.FC = () => {
         days.push(
           <div
             key={d}
-            className="aspect-square flex items-center justify-center text-gray-300 font-['Outfit'] font-bold text-sm"
+            className="aspect-square flex items-center justify-center text-gray-400 font-['Outfit'] font-bold text-xs"
           >
             {d}
           </div>
@@ -427,12 +433,12 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Streak Counter */}
-        <div className="pointer-events-auto bg-[#FF69B4] text-white border-4 border-black px-3 py-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-2 flex items-center gap-2" title="Current Streak">
+        {/* Right: Streak Counter - Pink Heart */}
+        <div className="pointer-events-auto bg-[#FF69B4] text-white border-4 border-black px-3 py-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-2 flex items-center gap-1" title="Current Streak">
           <span className="font-['Outfit'] font-black text-lg">{streak}</span>
           <svg className="w-6 h-6 fill-current animate-pulse" viewBox="0 0 24 24">
-            {/* Fire/Flame icon for streak */}
-            <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
+            {/* Heart icon */}
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
         </div>
       </div>
@@ -604,31 +610,54 @@ const App: React.FC = () => {
 
       {/* --- Calendar Modal --- */}
       {showCalendar && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-fade-in">
-          <div className="bg-[#FFF0F5] w-full md:w-[400px] h-[80dvh] md:h-auto border-t-4 md:border-4 border-black flex flex-col shadow-2xl animate-slide-up">
-            {/* Modal Header */}
-            <div className="bg-white border-b-4 border-black p-4 flex justify-between items-center">
-              <h2 className="font-['Caveat'] text-3xl font-bold">
-                {new Date().toLocaleString('default', { month: 'long' })}
-              </h2>
-              <button onClick={() => { setShowCalendar(false); setSelectedDate(null); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 animate-fade-in">
+          <div className="bg-[#FFF0F5] w-full max-w-[500px] max-h-[90dvh] border-4 border-black flex flex-col shadow-2xl animate-slide-up overflow-hidden">
+            {/* Modal Header with Navigation */}
+            <div className="bg-white border-b-4 border-black p-3 flex justify-between items-center">
+              <button
+                onClick={goToPrevMonth}
+                className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </button>
+
+              <div className="flex items-center gap-3">
+                <h2 className="font-['Caveat'] text-2xl font-bold">
+                  {calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </h2>
+                {/* Streak in Calendar */}
+                <div className="bg-[#FF69B4] text-white border-2 border-black px-2 py-0.5 flex items-center gap-1 text-sm font-bold">
+                  <span>{streak}</span>
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={goToNextMonth}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <button onClick={() => { setShowCalendar(false); setSelectedDate(null); setCalendarMonth(new Date()); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
 
             {/* Calendar Grid */}
             {!selectedDate ? (
-              <div className="p-6">
-                <div className="grid grid-cols-7 gap-2 mb-2 text-center">
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                    <span key={d} className="font-bold text-xs text-gray-400">{d}</span>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <div className="grid grid-cols-7 gap-1 mb-1 text-center">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <span key={i} className="font-bold text-xs text-gray-400">{d}</span>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1">
                   {renderCalendar()}
                 </div>
-
-
               </div>
             ) : (
               // Single Day View - Polaroid Style
