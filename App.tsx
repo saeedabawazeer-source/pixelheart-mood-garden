@@ -403,16 +403,36 @@ const App: React.FC = () => {
   // --- SPECIAL SUSPENSE SCREEN (Saeed only) ---
   if (appState === 'SPECIAL_LOADING') {
     return (
-      <div className="h-[100dvh] w-full bg-black flex flex-col items-center justify-center p-8 animate-fade-in">
-        <h1 className="font-['Courier_New'] text-white text-3xl md:text-5xl font-bold tracking-widest text-center animate-pulse mb-8">
-          WARNING
-        </h1>
-        <div className="w-full max-w-md h-1 bg-gray-800 rounded-full overflow-hidden mb-8">
-          <div className="h-full bg-red-600 animate-[width_3s_ease-out_forwards]" style={{ width: '0%' }}></div>
+      <div className="h-[100dvh] w-full bg-[#FFE4E1] flex flex-col items-center justify-center p-8 animate-fade-in font-['Outfit'] relative overflow-hidden">
+        {/* Background Pattern */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(#FF1493 2px, transparent 2px),
+              linear-gradient(90deg, #FF1493 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        ></div>
+
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full transform rotate-1 flex flex-col items-center text-center animate-bounce-in relative z-10">
+          <div className="w-16 h-1 bg-gray-200 rounded-full mb-6 overflow-hidden border border-black">
+            <div className="h-full bg-[#FF69B4] animate-[width_3s_ease-out_forwards]" style={{ width: '0%' }}></div>
+          </div>
+
+          <p className="font-['Caveat'] text-3xl font-bold text-black mb-2 leading-relaxed">
+            ✨ Just a reminder... ✨
+          </p>
+
+          <p className="font-['Outfit'] font-black text-xl text-[#FF1493] uppercase tracking-widest mt-4 animate-pulse">
+            YOU'RE BLACK
+          </p>
+
+          <div className="absolute -top-3 -right-3 text-4xl transform rotate-12">💖</div>
+          <div className="absolute -bottom-3 -left-3 text-4xl transform -rotate-12">✨</div>
         </div>
-        <p className="font-mono text-red-500 text-xl tracking-wider typewriter">
-          YOU'RE BLACK
-        </p>
+
         <style>{`
           @keyframes width { to { width: 100%; } }
         `}</style>
