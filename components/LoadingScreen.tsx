@@ -4,7 +4,7 @@ interface LoadingScreenProps {
     onComplete: () => void;
 }
 
-const TEXT = "shahoodti";
+const TEXT = "Shadad's Space";
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
     const [displayedText, setDisplayedText] = useState("");
