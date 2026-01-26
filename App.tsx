@@ -391,9 +391,18 @@ const App: React.FC = () => {
     return <PasswordScreen onUnlock={(user) => {
       setCurrentUser(user);
       if (user === 'saeed') {
-        // Trigger special suspense sequence for Saeed
-        setAppState('SPECIAL_LOADING');
-        setTimeout(() => setAppState('APP'), 4000); // 4 seconds suspense
+        // Check if we've already shown the special note
+        const hasSeenNote = localStorage.getItem('hasSeenSpecialNote');
+
+        if (!hasSeenNote) {
+          // Trigger special suspense sequence for Saeed (First time only)
+          setAppState('SPECIAL_LOADING');
+          localStorage.setItem('hasSeenSpecialNote', 'true');
+          setTimeout(() => setAppState('APP'), 4000); // 4 seconds suspense
+        } else {
+          // Skip straight to app if seen
+          setAppState('APP');
+        }
       } else {
         setAppState('APP');
       }
