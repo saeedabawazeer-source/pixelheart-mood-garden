@@ -43,7 +43,7 @@ const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
 
             <div className="z-10 bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6 max-w-sm w-full mx-4 animate-bounce-in">
                 <h2 className="text-2xl font-bold text-center uppercase tracking-widest">
-                    Who goes there?
+                    PASSWORD
                 </h2>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
