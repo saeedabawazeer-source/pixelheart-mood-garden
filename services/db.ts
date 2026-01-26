@@ -27,13 +27,13 @@ const getDB = async () => {
   return dbPromise;
 };
 
-export const saveMemory = async (memory: Memory) => {
+export const saveMemory = async (memory: Memory, isNewMemory: boolean = true) => {
   // Save locally first
   const db = await getDB();
   await db.put('memories', memory);
 
-  // Then sync to cloud (non-blocking)
-  saveMemoryToCloud(memory).catch(err => console.warn('Cloud sync failed:', err));
+  // Then sync to cloud (non-blocking) - pass isNewMemory for email notification
+  saveMemoryToCloud(memory, isNewMemory).catch(err => console.warn('Cloud sync failed:', err));
 };
 
 export const getMemories = async (): Promise<Memory[]> => {
@@ -75,7 +75,8 @@ export const syncLocalToCloud = async (): Promise<{ synced: number; failed: numb
 
   for (const memory of localMemories) {
     try {
-      const success = await saveMemoryToCloud(memory);
+      // Pass false for isNewMemory to avoid email notifications for old photos
+      const success = await saveMemoryToCloud(memory, false);
       if (success) {
         synced++;
       } else {

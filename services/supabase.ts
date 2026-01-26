@@ -26,7 +26,7 @@ export const saveMemoryToCloud = async (memory: {
     mood: string;
     imageUrl: string;
     summary: string;
-}): Promise<boolean> => {
+}, isNewMemory: boolean = false): Promise<boolean> => {
     try {
         if (!supabaseAnonKey) {
             console.warn('Supabase not configured, skipping cloud save');
@@ -49,6 +49,19 @@ export const saveMemoryToCloud = async (memory: {
         }
 
         console.log('✅ Saved to cloud:', memory.id);
+
+        // Send email notification for new memories only
+        if (isNewMemory) {
+            try {
+                await supabase.functions.invoke('notify-new-memory', {
+                    body: { mood: memory.mood, date: memory.date }
+                });
+                console.log('📧 Email notification sent!');
+            } catch (emailErr) {
+                console.warn('Email notification failed:', emailErr);
+            }
+        }
+
         return true;
     } catch (err) {
         console.error('Cloud save failed:', err);
