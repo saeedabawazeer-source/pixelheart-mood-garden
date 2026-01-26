@@ -1,5 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { Memory } from '../types';
+import { saveMemoryToCloud, getMemoriesFromCloud } from './supabase';
 
 interface MoodGardenDB extends DBSchema {
   memories: {
@@ -27,21 +28,67 @@ const getDB = async () => {
 };
 
 export const saveMemory = async (memory: Memory) => {
+  // Save locally first
   const db = await getDB();
   await db.put('memories', memory);
+
+  // Then sync to cloud (non-blocking)
+  saveMemoryToCloud(memory).catch(err => console.warn('Cloud sync failed:', err));
 };
 
 export const getMemories = async (): Promise<Memory[]> => {
+  // Try cloud first for cross-device sync
+  try {
+    const cloudMemories = await getMemoriesFromCloud();
+    if (cloudMemories.length > 0) {
+      // Map cloud format to local format
+      return cloudMemories.map(m => ({
+        id: m.id,
+        date: m.date,
+        mood: m.mood,
+        imageUrl: m.image_url,
+        summary: m.summary
+      }));
+    }
+  } catch (err) {
+    console.warn('Cloud fetch failed, using local:', err);
+  }
+
+  // Fallback to local IndexedDB
   const db = await getDB();
-  // Get all and reverse to show newest first (simple approach)
-  // Ideally use a cursor for large datasets, but this is fine for now < 10k items
   const memories = await db.getAll('memories');
-  return memories.sort((a, b) => Number(b.id) - Number(a.id)); 
+  return memories.sort((a, b) => Number(b.id) - Number(a.id));
 };
 
 export const deleteMemory = async (id: string) => {
   const db = await getDB();
   await db.delete('memories', id);
+};
+
+// Sync all local memories to cloud (for migrating existing photos)
+export const syncLocalToCloud = async (): Promise<{ synced: number; failed: number }> => {
+  const db = await getDB();
+  const localMemories = await db.getAll('memories');
+
+  let synced = 0;
+  let failed = 0;
+
+  for (const memory of localMemories) {
+    try {
+      const success = await saveMemoryToCloud(memory);
+      if (success) {
+        synced++;
+      } else {
+        failed++;
+      }
+    } catch (err) {
+      console.error('Failed to sync memory:', memory.id, err);
+      failed++;
+    }
+  }
+
+  console.log(`✅ Synced ${synced} memories to cloud, ${failed} failed`);
+  return { synced, failed };
 };
 
 export const exportMemoriesToCSV = async () => {
@@ -56,9 +103,9 @@ export const exportMemoriesToCSV = async () => {
       const date = `"${m.date || ''}"`;
       const mood = `"${(m.mood || '').replace(/"/g, '""')}"`;
       const summary = `"${(m.summary || '').replace(/"/g, '""')}"`;
-         // Image URL might be base64, leaving it as is might be huge but it's requested "simple excel".
-         // Truncate or link if it's too big? For now, keep it. 
-         // User asked for "saved" pics.
+      // Image URL might be base64, leaving it as is might be huge but it's requested "simple excel".
+      // Truncate or link if it's too big? For now, keep it. 
+      // User asked for "saved" pics.
       const image = `"${(m.imageUrl || '').substring(0, 100)}..."`; // Just a preview in CSV, full base64 breaks Excel often
       return [date, mood, summary, image].join(',');
     })

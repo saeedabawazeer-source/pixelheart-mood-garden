@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 
+export type UserRole = 'saeed' | 'shahad';
+
 interface PasswordScreenProps {
-    onUnlock: () => void;
+    onUnlock: (user: UserRole) => void;
 }
 
-const PASSWORD_HASH = "saeed"; // Simple hardcoded as requested
+const USERS: Record<string, UserRole> = {
+    "saeed": "saeed",   // Owner - can post photos
+    "shahad": "shahad"  // Viewer - can view Saeed's photos
+};
 
 const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
     const [input, setInput] = useState("");
@@ -12,8 +17,9 @@ const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.toLowerCase().trim() === PASSWORD_HASH) {
-            onUnlock();
+        const normalizedInput = input.toLowerCase().trim();
+        if (USERS[normalizedInput]) {
+            onUnlock(USERS[normalizedInput]);
         } else {
             setError(true);
             setInput("");

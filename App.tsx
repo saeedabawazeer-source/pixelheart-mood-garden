@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Memory } from './types';
-import { saveMemory, getMemories } from './services/db';
+import { saveMemory, getMemories, syncLocalToCloud } from './services/db';
 import LoadingScreen from './components/LoadingScreen';
-import PasswordScreen from './components/PasswordScreen';
+import PasswordScreen, { UserRole } from './components/PasswordScreen';
 
 // --- Types ---
 type Wish = {
@@ -87,6 +87,7 @@ const calculateStreak = (memories: Memory[]) => {
 const App: React.FC = () => {
   // --- App Flow State ---
   const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'APP'>('LOADING');
+  const [currentUser, setCurrentUser] = useState<UserRole | null>(null);
 
   // State
   const [inputMood, setInputMood] = useState('');
@@ -144,16 +145,23 @@ const App: React.FC = () => {
         setMemories(dbMemories);
         setStreak(calculateStreak(dbMemories));
 
-        // 3. Start Camera
-        startCamera();
+        // 3. For Saeed: Auto-sync local photos to cloud in background
+        if (currentUser === 'saeed') {
+          syncLocalToCloud().then(result => {
+            console.log(`☁️ Auto-synced ${result.synced} photos to cloud`);
+          }).catch(err => console.warn('Auto-sync failed:', err));
+
+          // Start Camera only for Saeed
+          startCamera();
+        }
       };
       loadData();
     }
 
     return () => {
-      if (appState === 'APP') stopCamera();
+      if (appState === 'APP' && currentUser === 'saeed') stopCamera();
     };
-  }, [appState]);
+  }, [appState, currentUser]);
 
 
   // --- Camera Functions ---
@@ -370,10 +378,134 @@ const App: React.FC = () => {
   }
 
   if (appState === 'AUTH') {
-    return <PasswordScreen onUnlock={() => setAppState('APP')} />;
+    return <PasswordScreen onUnlock={(user) => {
+      setCurrentUser(user);
+      setAppState('APP');
+    }} />;
   }
 
-  // --- MAIN APP ---
+  // --- GALLERY VIEW FOR SHAHAD (Viewer) ---
+  if (currentUser === 'shahad') {
+    return (
+      <div className="h-[100dvh] w-full bg-[#FFE4E1] relative flex flex-col items-center overflow-hidden font-['Outfit'] selection:bg-[#FF69B4] selection:text-white">
+        {/* --- Brutal Pattern Background --- */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(#FF1493 2px, transparent 2px),
+              linear-gradient(90deg, #FF1493 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        ></div>
+
+        {/* --- Header --- */}
+        <div className="w-full px-4 pt-6 pb-4 flex items-center justify-center z-40">
+          <div className="bg-white border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+            <h1 className="font-['Caveat'] text-3xl md:text-4xl text-black font-bold tracking-wider">
+              Shahad's View 💕
+            </h1>
+          </div>
+        </div>
+
+        {/* --- Gallery Grid --- */}
+        <div className="flex-1 w-full overflow-y-auto px-4 pb-6 z-10">
+          {memories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <p className="font-['Caveat'] text-2xl text-gray-500">No memories yet...</p>
+                <p className="text-sm text-gray-400 mt-2">Saeed hasn't posted any photos yet!</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-center text-sm text-gray-500 mb-4 font-medium">
+                {memories.length} {memories.length === 1 ? 'memory' : 'memories'} from Saeed ✨
+              </p>
+              <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                {memories.map((memory) => (
+                  <button
+                    key={memory.id}
+                    onClick={() => { setShowCalendar(true); setSelectedDate(memory); }}
+                    className="group relative bg-white border-4 border-black p-2 pb-10 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:rotate-1 transition-all cursor-pointer"
+                  >
+                    {/* Photo */}
+                    <div className="w-full aspect-square border-2 border-black/20 bg-gray-100 overflow-hidden">
+                      <img src={memory.imageUrl} className="w-full h-full object-cover" alt="Memory" />
+                    </div>
+                    {/* Caption */}
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="font-['Caveat'] text-lg font-bold text-black truncate">{memory.mood}</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider">{memory.date}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* --- Detail Modal (reusing calendar modal structure) --- */}
+        {showCalendar && selectedDate && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 animate-fade-in">
+            <div className="bg-[#FFF0F5] w-full max-w-[500px] max-h-[90dvh] border-4 border-black flex flex-col shadow-2xl animate-slide-up overflow-hidden">
+              {/* Modal Header */}
+              <div className="bg-white border-b-4 border-black p-3 flex justify-between items-center">
+                <h2 className="font-['Caveat'] text-2xl font-bold">Memory Details</h2>
+                <button onClick={() => { setShowCalendar(false); setSelectedDate(null); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {/* Polaroid View */}
+              <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
+                <div className="relative bg-white border-4 border-black p-3 pb-24 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full max-w-[320px] transform rotate-1 shrink-0 transition-transform hover:scale-[1.02]">
+                  {/* Photo Area */}
+                  <div className="w-full aspect-square border-2 border-black bg-black relative flex items-center justify-center overflow-hidden">
+                    <img src={selectedDate.imageUrl} className="w-full h-full object-cover" alt="Memory" />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
+                  </div>
+
+                  {/* Chin Area */}
+                  <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
+                    <div className="flex flex-col gap-1 w-full">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        {selectedDate.date}
+                      </label>
+                      <div className="flex items-center gap-2 border-b-2 border-black pb-1">
+                        <span className="flex-1 text-2xl font-['Caveat'] font-bold text-black leading-none -mb-1 truncate">
+                          {selectedDate.mood}
+                        </span>
+                        <div className="bg-[#FF69B4] text-white border border-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          💕
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sticky Note */}
+                  {selectedDate.summary && (
+                    <div className="absolute inset-0 pointer-events-none overflow-visible">
+                      <div
+                        className="absolute top-[10%] -right-4 w-[120px] p-3 bg-[#FEF3C7] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transform rotate-6 z-20 flex items-center justify-center text-center animate-bounce-in"
+                      >
+                        <p className="font-['Caveat'] text-black text-xl leading-none font-bold break-words">
+                          {selectedDate.summary}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- MAIN APP (SAEED - Owner) ---
   return (
     <div className="h-[100dvh] w-full bg-[#FFE4E1] relative flex flex-col items-center justify-center overflow-hidden font-['Outfit'] selection:bg-[#FF69B4] selection:text-white">
 
