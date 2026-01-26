@@ -109,6 +109,7 @@ const App: React.FC = () => {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Memory | null>(null);
+  const [selectedDayMemories, setSelectedDayMemories] = useState<Memory[]>([]);
   const [streak, setStreak] = useState(0);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
 
@@ -344,15 +345,24 @@ const App: React.FC = () => {
       const latestMemory = dayMemories[0];
 
       if (hasMemory) {
-        // Render Mini Polaroid
+        // Render Mini Polaroid with count badge
         days.push(
           <button
             key={d}
-            onClick={() => setSelectedDate(latestMemory)}
+            onClick={() => {
+              setSelectedDayMemories(dayMemories);
+              setSelectedDate(dayMemories[0]);
+            }}
             className="group relative flex flex-col bg-white border-2 border-black p-0.5 pb-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:rotate-2 transition-all cursor-pointer overflow-hidden"
           >
             <div className="w-full aspect-square border border-black/20 bg-gray-100 overflow-hidden relative">
               <img src={latestMemory.imageUrl} className="w-full h-full object-cover" alt="day thumbnail" />
+              {/* Photo count badge */}
+              {dayMemories.length > 1 && (
+                <div className="absolute top-0.5 right-0.5 bg-[#FF69B4] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-black">
+                  {dayMemories.length}
+                </div>
+              )}
             </div>
             <span className="absolute bottom-0 left-0 right-0 text-center font-['Caveat'] font-bold text-xs text-black">{d}</span>
           </button>
@@ -774,51 +784,52 @@ const App: React.FC = () => {
                 </div>
               </div>
             ) : (
-              // Single Day View - Polaroid Style
-              <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
-                {/* Polaroid Container */}
-                <div className="relative bg-white border-4 border-black p-3 pb-24 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full max-w-[320px] transform rotate-1 shrink-0 transition-transform hover:scale-[1.02]">
+              // Single Day View - Polaroid List (Scrollable if multiple)
+              <div className="flex-1 p-6 flex flex-col items-center overflow-y-auto min-h-0 w-full gap-8">
+                {(selectedDayMemories.length > 0 ? selectedDayMemories : [selectedDate]).map((memory, index) => (
+                  <div key={memory.id} className="relative bg-white border-4 border-black p-3 pb-24 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full max-w-[320px] transform shrink-0 transition-transform hover:scale-[1.02] last:mb-8" style={{ rotate: index % 2 === 0 ? '1deg' : '-1deg' }}>
 
-                  {/* Photo Area */}
-                  <div className="w-full aspect-square border-2 border-black bg-black relative flex items-center justify-center overflow-hidden">
-                    <img src={selectedDate.imageUrl} className="w-full h-full object-cover" alt="Memory" />
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
-                  </div>
+                    {/* Photo Area */}
+                    <div className="w-full aspect-square border-2 border-black bg-black relative flex items-center justify-center overflow-hidden">
+                      <img src={memory.imageUrl} className="w-full h-full object-cover" alt="Memory" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
+                    </div>
 
-                  {/* Chin Area - Mirroring the Input Area */}
-                  <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
-                    <div className="flex flex-col gap-1 w-full">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {selectedDate.date}
-                      </label>
-                      <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-                        <span className="flex-1 text-2xl font-['Caveat'] font-bold text-black leading-none -mb-1 truncate">
-                          {selectedDate.mood}
-                        </span>
-                        {/* Read-only 'Saved' Badge */}
-                        <div className="bg-[#FF69B4] text-white border border-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          SAVED
+                    {/* Chin Area */}
+                    <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
+                      <div className="flex flex-col gap-1 w-full">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                          {memory.date}
+                        </label>
+                        <div className="flex items-center gap-2 border-b-2 border-black pb-1">
+                          <span className="flex-1 text-2xl font-['Caveat'] font-bold text-black leading-none -mb-1 truncate">
+                            {memory.mood}
+                          </span>
+                          {/* Read-only 'Saved' Badge */}
+                          <div className="bg-[#FF69B4] text-white border border-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            SAVED
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Sticky Note - Overlay (Only if text exists) */}
-                  {selectedDate.summary && (
-                    <div className="absolute inset-0 pointer-events-none overflow-visible">
-                      <div
-                        className="absolute top-[10%] -right-4 w-[120px] p-3 bg-[#FEF3C7] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transform rotate-6 z-20 flex items-center justify-center text-center animate-bounce-in"
-                      >
-                        <p className="font-['Caveat'] text-black text-xl leading-none font-bold break-words">
-                          {selectedDate.summary}
-                        </p>
+                    {/* Sticky Note */}
+                    {memory.summary && (
+                      <div className="absolute inset-0 pointer-events-none overflow-visible">
+                        <div
+                          className="absolute top-[10%] -right-4 w-[120px] p-3 bg-[#FEF3C7] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transform rotate-6 z-20 flex items-center justify-center text-center animate-bounce-in"
+                        >
+                          <p className="font-['Caveat'] text-black text-xl leading-none font-bold break-words">
+                            {memory.summary}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                </div>
+                  </div>
+                ))}
 
-                <button onClick={() => setSelectedDate(null)} className="mt-8 font-['Outfit'] font-bold uppercase tracking-widest text-xs border-b-2 border-black pb-1 hover:text-[#FF69B4] hover:border-[#FF69B4] transition-colors">
+                <button onClick={() => { setSelectedDate(null); setSelectedDayMemories([]); }} className="mt-4 font-['Outfit'] font-bold uppercase tracking-widest text-xs border-b-2 border-black pb-1 hover:text-[#FF69B4] hover:border-[#FF69B4] transition-colors mb-8">
                   Back to Calendar
                 </button>
               </div>
