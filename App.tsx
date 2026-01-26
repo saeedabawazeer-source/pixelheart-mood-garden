@@ -411,8 +411,7 @@ const App: React.FC = () => {
           <div className="h-full bg-red-600 animate-[width_3s_ease-out_forwards]" style={{ width: '0%' }}></div>
         </div>
         <p className="font-mono text-red-500 text-xl tracking-wider typewriter">
-          {/* REPLACE THIS TEXT WITH YOUR MESSAGE */}
-          *** *** *****
+          YOU'RE BLACK
         </p>
         <style>{`
           @keyframes width { to { width: 100%; } }
