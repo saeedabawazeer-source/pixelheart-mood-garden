@@ -86,7 +86,7 @@ const calculateStreak = (memories: Memory[]) => {
 
 const App: React.FC = () => {
   // --- App Flow State ---
-  const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'APP'>('LOADING');
+  const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'SPECIAL_LOADING' | 'APP'>('LOADING');
   const [currentUser, setCurrentUser] = useState<UserRole | null>(null);
 
   // State
@@ -390,8 +390,35 @@ const App: React.FC = () => {
   if (appState === 'AUTH') {
     return <PasswordScreen onUnlock={(user) => {
       setCurrentUser(user);
-      setAppState('APP');
+      if (user === 'saeed') {
+        // Trigger special suspense sequence for Saeed
+        setAppState('SPECIAL_LOADING');
+        setTimeout(() => setAppState('APP'), 4000); // 4 seconds suspense
+      } else {
+        setAppState('APP');
+      }
     }} />;
+  }
+
+  // --- SPECIAL SUSPENSE SCREEN (Saeed only) ---
+  if (appState === 'SPECIAL_LOADING') {
+    return (
+      <div className="h-[100dvh] w-full bg-black flex flex-col items-center justify-center p-8 animate-fade-in">
+        <h1 className="font-['Courier_New'] text-white text-3xl md:text-5xl font-bold tracking-widest text-center animate-pulse mb-8">
+          WARNING
+        </h1>
+        <div className="w-full max-w-md h-1 bg-gray-800 rounded-full overflow-hidden mb-8">
+          <div className="h-full bg-red-600 animate-[width_3s_ease-out_forwards]" style={{ width: '0%' }}></div>
+        </div>
+        <p className="font-mono text-red-500 text-xl tracking-wider typewriter">
+          {/* REPLACE THIS TEXT WITH YOUR MESSAGE */}
+          *** *** *****
+        </p>
+        <style>{`
+          @keyframes width { to { width: 100%; } }
+        `}</style>
+      </div>
+    );
   }
 
   // --- GALLERY VIEW FOR SHAHAD (Viewer) ---
