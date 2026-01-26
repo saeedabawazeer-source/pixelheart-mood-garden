@@ -607,7 +607,7 @@ const App: React.FC = () => {
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
           <div className="bg-white border-4 border-black px-4 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
             <h1 className="font-['Caveat'] text-3xl md:text-5xl text-black font-bold tracking-wider">
-              SHAHOODTI
+              Shadad's Space
             </h1>
           </div>
         </div>
