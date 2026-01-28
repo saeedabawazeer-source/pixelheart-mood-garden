@@ -517,50 +517,71 @@ const App: React.FC = () => {
             <div className="bg-[#FFF0F5] w-full max-w-[500px] max-h-[90dvh] border-4 border-black flex flex-col shadow-2xl animate-slide-up overflow-hidden">
               {/* Modal Header */}
               <div className="bg-white border-b-4 border-black p-3 flex justify-between items-center">
-                <h2 className="font-['Caveat'] text-2xl font-bold">Memory Details</h2>
-                <button onClick={() => { setShowCalendar(false); setSelectedDate(null); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button
+                  onClick={() => {
+                    // Prev Day
+                    const sortedDates = Array.from(new Set(memories.map(m => m.date))).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                    const currentIndex = sortedDates.indexOf(selectedDate.date);
+                    if (currentIndex < sortedDates.length - 1) {
+                      const prevDate = sortedDates[currentIndex + 1];
+                      const prevMemories = memories.filter(m => m.date === prevDate);
+                      setSelectedDate(prevMemories[0]);
+                      setSelectedDayMemories(prevMemories);
+                    }
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
+
+                <h2 className="font-['Caveat'] text-2xl font-bold">Memory Details</h2>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      // Next Day
+                      const sortedDates = Array.from(new Set(memories.map(m => m.date))).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                      const currentIndex = sortedDates.indexOf(selectedDate.date);
+                      if (currentIndex > 0) {
+                        const nextDate = sortedDates[currentIndex - 1];
+                        const nextMemories = memories.filter(m => m.date === nextDate);
+                        setSelectedDate(nextMemories[0]);
+                        setSelectedDayMemories(nextMemories);
+                      }
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                  <button onClick={() => { setShowCalendar(false); setSelectedDate(null); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
               </div>
 
               {/* Polaroid View */}
-              <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-y-auto min-h-0 w-full">
-                <div className="relative bg-white border-4 border-black p-3 pb-24 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full max-w-[320px] transform rotate-1 shrink-0 transition-transform hover:scale-[1.02]">
-                  {/* Photo Area */}
-                  <div className="w-full aspect-square border-2 border-black bg-black relative flex items-center justify-center overflow-hidden">
-                    <img src={selectedDate.imageUrl} className="w-full h-full object-cover" alt="Memory" />
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
-                  </div>
+              <div className="flex-1 p-4 min-h-0 w-full overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4 auto-rows-max pb-8">
+                  {(selectedDayMemories.length > 0 ? selectedDayMemories : [selectedDate]).map((memory, index) => (
+                    <div key={memory.id} className="relative bg-white border-[3px] border-black p-2 pb-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full hover:scale-[1.02] transition-transform">
+                      {/* Photo */}
+                      <div className="w-full aspect-square border-2 border-black bg-black relative overflow-hidden">
+                        <img src={memory.imageUrl} className="w-full h-full object-cover" alt="Memory" />
+                      </div>
 
-                  {/* Chin Area */}
-                  <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
-                    <div className="flex flex-col gap-1 w-full">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {selectedDate.date}
-                      </label>
-                      <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-                        <span className="flex-1 text-2xl font-['Caveat'] font-bold text-black leading-none -mb-1 truncate">
-                          {selectedDate.mood}
+                      {/* Chin */}
+                      <div className="absolute bottom-2 left-2 right-2 flex flex-col items-center">
+                        <span className="font-['Caveat'] text-lg font-bold text-black leading-none truncate w-full text-center">
+                          {memory.mood}
                         </span>
-                        <div className="bg-[#FF69B4] text-white border border-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          💕
-                        </div>
+                        {memory.summary && (
+                          <div className="absolute top-[-140%] right-[-10%] bg-[#FEF3C7] text-black border border-black p-1 text-[8px] sm:text-[10px] w-20 transform rotate-6 shadow-sm font-['Caveat'] leading-tight z-10 text-center animate-bounce-in">
+                            {memory.summary}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Sticky Note */}
-                  {selectedDate.summary && (
-                    <div className="absolute inset-0 pointer-events-none overflow-visible">
-                      <div
-                        className="absolute top-[10%] -right-4 w-[120px] p-3 bg-[#FEF3C7] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transform rotate-6 z-20 flex items-center justify-center text-center animate-bounce-in"
-                      >
-                        <p className="font-['Caveat'] text-black text-xl leading-none font-bold break-words">
-                          {selectedDate.summary}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -674,6 +695,23 @@ const App: React.FC = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
           </div>
 
+          {/* INTEGRATED ADD NOTE BUTTON (Half-in/Half-out) - NOW OUTSIDE OF OVERFLOW-HIDDEN */}
+          <button
+            onClick={openNoteModal}
+            disabled={isGenerating}
+            className="absolute -top-1 -right-1 z-30 flex flex-col items-center gap-0.5 group transform rotate-6"
+            title="Add a note"
+          >
+            <div className="w-9 h-9 bg-[#FF69B4] border-[3px] border-black flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:scale-110 group-hover:rotate-6 group-active:scale-95 transition-all">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <span className="font-['Outfit'] text-[8px] font-bold bg-white border border-black px-1.5 py-0.5 leading-tight shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] -mt-1 relative z-10">
+              ADD NOTE
+            </span>
+          </button>
+
           {/* Polaroid Chin / Input Area */}
           <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
             <form onSubmit={handlePost} className="flex flex-col gap-1 w-full">
@@ -741,18 +779,6 @@ const App: React.FC = () => {
 
         </div>
 
-        {/* Floating Add Note Button (Outside the frame) */}
-        <button
-          onClick={openNoteModal}
-          disabled={isGenerating}
-          className="absolute -bottom-28 -right-4 z-30 w-16 h-16 bg-[#FF69B4] border-4 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:scale-110 hover:rotate-6 active:scale-95 transition-all transform rotate-6"
-          title="Add a sticky note"
-        >
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-
       </div>
 
       {/* --- Sticky Note Modal --- */}
@@ -792,34 +818,78 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 animate-fade-in">
           <div className="bg-[#FFF0F5] w-full max-w-[500px] max-h-[90dvh] border-4 border-black flex flex-col shadow-2xl animate-slide-up overflow-hidden">
             {/* Modal Header with Navigation */}
-            <div className="bg-white border-b-4 border-black p-3 flex justify-between items-center">
-              <button
-                onClick={goToPrevMonth}
-                className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              </button>
+            <div className={`bg-white border-b-4 border-black p-3 flex justify-between items-center ${selectedDate ? 'bg-[#FFF0F5]' : ''}`}>
+              {!selectedDate ? (
+                // Month Navigation (Calendar View)
+                <button
+                  onClick={goToPrevMonth}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+              ) : (
+                // Day Navigation (Detail View)
+                <button
+                  onClick={() => {
+                    // Prev Day with Photos
+                    const sortedDates = Array.from(new Set(memories.map(m => m.date))).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                    const currentIndex = sortedDates.indexOf(selectedDate.date);
+                    // Logic: if current index < length - 1, we can go backward in time (to older date, which is higher index)
+                    if (currentIndex < sortedDates.length - 1) {
+                      const prevDate = sortedDates[currentIndex + 1];
+                      const prevMemories = memories.filter(m => m.date === prevDate);
+                      setSelectedDate(prevMemories[0]);
+                      setSelectedDayMemories(prevMemories);
+                    }
+                  }}
+                  className="p-2 hover:bg-white rounded-full border-2 border-transparent hover:border-black transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+              )}
 
               <div className="flex items-center gap-3">
                 <h2 className="font-['Caveat'] text-2xl font-bold">
-                  {calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                  {selectedDate ? 'Memory Details' : calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </h2>
-                {/* Streak in Calendar */}
-                <div className="bg-[#FF69B4] text-white border-2 border-black px-2 py-0.5 flex items-center gap-1 text-sm font-bold">
-                  <span>{streak}</span>
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                </div>
+                {/* Streak in Calendar (Only in Main View) */}
+                {!selectedDate && (
+                  <div className="bg-[#FF69B4] text-white border-2 border-black px-2 py-0.5 flex items-center gap-1 text-sm font-bold">
+                    <span>{streak}</span>
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-1">
-                <button
-                  onClick={goToNextMonth}
-                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </button>
+                {!selectedDate ? (
+                  <button
+                    onClick={goToNextMonth}
+                    className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      // Next Day with Photos
+                      const sortedDates = Array.from(new Set(memories.map(m => m.date))).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                      const currentIndex = sortedDates.indexOf(selectedDate.date);
+                      if (currentIndex > 0) {
+                        const nextDate = sortedDates[currentIndex - 1];
+                        const nextMemories = memories.filter(m => m.date === nextDate);
+                        setSelectedDate(nextMemories[0]);
+                        setSelectedDayMemories(nextMemories);
+                      }
+                    }}
+                    className="p-2 hover:bg-white rounded-full border-2 border-transparent hover:border-black transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                )}
+
                 <button onClick={() => { setShowCalendar(false); setSelectedDate(null); setCalendarMonth(new Date()); }} className="p-2 hover:bg-gray-100 rounded-full border-2 border-transparent hover:border-black transition-all">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -840,60 +910,42 @@ const App: React.FC = () => {
               </div>
             ) : (
               // Single Day View - Polaroid List (Scrollable if multiple)
-              <div className="flex-1 p-6 flex flex-col items-center overflow-y-auto min-h-0 w-full gap-8">
-                {(selectedDayMemories.length > 0 ? selectedDayMemories : [selectedDate]).map((memory, index) => (
-                  <div key={memory.id} className="relative bg-white border-4 border-black p-3 pb-24 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full max-w-[320px] transform shrink-0 transition-transform hover:scale-[1.02] last:mb-8" style={{ rotate: index % 2 === 0 ? '1deg' : '-1deg' }}>
-
-                    {/* Photo Area */}
-                    <div className="w-full aspect-square border-2 border-black bg-black relative flex items-center justify-center overflow-hidden">
-                      <img src={memory.imageUrl} className="w-full h-full object-cover" alt="Memory" />
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
-                    </div>
-
-                    {/* Chin Area */}
-                    <div className="absolute bottom-4 left-4 right-4 h-16 flex flex-col justify-end">
-                      <div className="flex flex-col gap-1 w-full">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                          {memory.date}
-                        </label>
-                        <div className="flex items-center gap-2 border-b-2 border-black pb-1">
-                          <span className="flex-1 text-2xl font-['Caveat'] font-bold text-black leading-none -mb-1 truncate">
-                            {memory.mood}
-                          </span>
-                          {/* Read-only 'Saved' Badge */}
-                          <div className="bg-[#FF69B4] text-white border border-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                            SAVED
-                          </div>
-                        </div>
+              // Single Day View - GRID LAYOUT (Saeed)
+              <div className="flex-1 p-4 min-h-0 w-full overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4 auto-rows-max pb-8">
+                  {(selectedDayMemories.length > 0 ? selectedDayMemories : [selectedDate]).map((memory, index) => (
+                    <div key={memory.id} className="relative bg-white border-[3px] border-black p-2 pb-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col w-full hover:scale-[1.02] transition-transform">
+                      {/* Photo */}
+                      <div className="w-full aspect-square border-2 border-black bg-black relative overflow-hidden">
+                        <img src={memory.imageUrl} className="w-full h-full object-cover" alt="Memory" />
                       </div>
-                    </div>
 
-                    {/* Sticky Note */}
-                    {memory.summary && (
-                      <div className="absolute inset-0 pointer-events-none overflow-visible">
-                        <div
-                          className="absolute top-[10%] -right-4 w-[120px] p-3 bg-[#FEF3C7] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] transform rotate-6 z-20 flex items-center justify-center text-center animate-bounce-in"
-                        >
-                          <p className="font-['Caveat'] text-black text-xl leading-none font-bold break-words">
+                      {/* Chin */}
+                      <div className="absolute bottom-2 left-2 right-2 flex flex-col items-center">
+                        <span className="font-['Caveat'] text-lg font-bold text-black leading-none truncate w-full text-center">
+                          {memory.mood}
+                        </span>
+                        {memory.summary && (
+                          <div className="absolute top-[-140%] right-[-10%] bg-[#FEF3C7] text-black border border-black p-1 text-[8px] sm:text-[10px] w-20 transform rotate-6 shadow-sm font-['Caveat'] leading-tight z-10 text-center animate-bounce-in">
                             {memory.summary}
-                          </p>
-                        </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+                  ))}
+                </div>
 
-                  </div>
-                ))}
 
                 <button onClick={() => { setSelectedDate(null); setSelectedDayMemories([]); }} className="mt-4 font-['Outfit'] font-bold uppercase tracking-widest text-xs border-b-2 border-black pb-1 hover:text-[#FF69B4] hover:border-[#FF69B4] transition-colors mb-8">
                   Back to Calendar
                 </button>
-              </div>
+              </div >
             )}
-          </div>
-        </div>
+          </div >
+        </div >
       )}
 
-    </div>
+    </div >
   );
 };
 

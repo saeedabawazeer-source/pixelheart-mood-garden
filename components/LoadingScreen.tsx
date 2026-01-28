@@ -27,10 +27,10 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
     }, [index, onComplete]);
 
     return (
-        <div className="h-[100dvh] w-full bg-[#FFF0F5] flex flex-col items-center justify-center font-['Caveat']">
-            <h1 className="text-4xl md:text-6xl text-black font-bold tracking-widest whitespace-nowrap">
+        <div className="h-[100dvh] w-full bg-[#FFF0F5] flex flex-col items-center justify-center font-['Caveat'] px-4 text-center">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl text-black font-bold tracking-widest whitespace-nowrap overflow-visible">
                 {displayedText}
-                <span className="animate-pulse">|</span>
+                <span className="animate-pulse ml-1">|</span>
             </h1>
         </div>
     );

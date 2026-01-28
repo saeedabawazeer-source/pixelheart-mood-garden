@@ -8,7 +8,7 @@ interface PasswordScreenProps {
 
 const USERS: Record<string, UserRole> = {
     "saeed": "saeed",   // Owner - can post photos
-    "shahad": "shahad"  // Viewer - can view Saeed's photos
+    "shahad31": "shahad"  // Viewer - can view Saeed's photos
 };
 
 const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
@@ -42,9 +42,13 @@ const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
             ></div>
 
             <div className="z-10 bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6 max-w-sm w-full mx-4 animate-bounce-in">
-                <h2 className="text-2xl font-bold text-center uppercase tracking-widest">
-                    PASSWORD
+                <h2 className="text-2xl font-bold text-center uppercase tracking-widest font-['Outfit']">
+                    Who are you?
                 </h2>
+
+                <p className="text-center font-['Caveat'] text-xl -mt-4 text-gray-500">
+                    (Enter your secret code)
+                </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <div className="relative">
@@ -52,13 +56,13 @@ const PasswordScreen: React.FC<PasswordScreenProps> = ({ onUnlock }) => {
                             type="password"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder="Enter Password"
+                            placeholder="Secret Password..."
                             className={`w-full bg-gray-50 border-2 ${error ? 'border-red-500 animate-shake' : 'border-black'} p-3 text-center text-xl focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all`}
                             autoFocus
                         />
                         {error && (
                             <span className="absolute -bottom-6 left-0 right-0 text-center text-red-500 text-xs font-bold uppercase">
-                                Access Denied
+                                Incorrect Password!
                             </span>
                         )}
                     </div>
