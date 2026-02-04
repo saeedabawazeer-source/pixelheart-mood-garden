@@ -86,7 +86,7 @@ const calculateStreak = (memories: Memory[]) => {
 
 const App: React.FC = () => {
   // --- App Flow State ---
-  const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'SPECIAL_LOADING' | 'APP'>('LOADING');
+  const [appState, setAppState] = useState<'LOADING' | 'AUTH' | 'SPECIAL_LOADING' | 'HEARTFUL_MESSAGE' | 'CONFIRM_UNDERSTOOD' | 'FINAL_MESSAGE' | 'APP'>('LOADING');
   const [currentUser, setCurrentUser] = useState<UserRole | null>(null);
 
   // State
@@ -398,15 +398,115 @@ const App: React.FC = () => {
           // Trigger special suspense sequence for Saeed (First time only)
           setAppState('SPECIAL_LOADING');
           localStorage.setItem('hasSeenSpecialNote', 'true');
-          setTimeout(() => setAppState('APP'), 4000); // 4 seconds suspense
+          setTimeout(() => setAppState('HEARTFUL_MESSAGE'), 4000); // After suspense, show heartful message
         } else {
-          // Skip straight to app if seen
-          setAppState('APP');
+          // Show heartful message every time
+          setAppState('HEARTFUL_MESSAGE');
         }
       } else {
         setAppState('APP');
       }
     }} />;
+  }
+
+  // --- HEARTFUL MESSAGE SCREEN (Saeed only) ---
+  if (appState === 'HEARTFUL_MESSAGE') {
+    return (
+      <div className="h-[100dvh] w-full bg-[#FFF0F5] flex flex-col items-center justify-center p-8 animate-fade-in font-['Outfit'] relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(#FF1493 2px, transparent 2px),
+              linear-gradient(90deg, #FF1493 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        ></div>
+
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full transform -rotate-1 flex flex-col items-center text-center animate-bounce-in relative z-10">
+          <div className="text-4xl mb-4">💌</div>
+          <h2 className="font-['Caveat'] text-2xl font-bold mb-4 text-[#FF1493]">A Heartful Message</h2>
+          <p className="font-['Outfit'] text-lg text-black mb-6 leading-relaxed">
+            If there's something on your mind... <strong>speak up.</strong>
+          </p>
+          <button
+            onClick={() => setAppState('CONFIRM_UNDERSTOOD')}
+            className="bg-[#FF69B4] text-white border-4 border-black px-8 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none transition-all"
+          >
+            Understood
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- CONFIRM UNDERSTOOD SCREEN ---
+  if (appState === 'CONFIRM_UNDERSTOOD') {
+    return (
+      <div className="h-[100dvh] w-full bg-[#FFF0F5] flex flex-col items-center justify-center p-8 animate-fade-in font-['Outfit'] relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(#FF1493 2px, transparent 2px),
+              linear-gradient(90deg, #FF1493 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        ></div>
+
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full flex flex-col items-center text-center animate-bounce-in relative z-10">
+          <div className="text-4xl mb-4">🤔</div>
+          <h2 className="font-['Caveat'] text-2xl font-bold mb-6">Are you sure?</h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setAppState('APP')}
+              className="bg-[#32CD32] text-white border-4 border-black px-6 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none transition-all"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setAppState('FINAL_MESSAGE')}
+              className="bg-[#FF6347] text-white border-4 border-black px-6 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none transition-all"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- FINAL MESSAGE SCREEN (If No was pressed) ---
+  if (appState === 'FINAL_MESSAGE') {
+    return (
+      <div className="h-[100dvh] w-full bg-[#FFF0F5] flex flex-col items-center justify-center p-8 animate-fade-in font-['Outfit'] relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(#FF1493 2px, transparent 2px),
+              linear-gradient(90deg, #FF1493 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        ></div>
+
+        <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full flex flex-col items-center text-center animate-bounce-in relative z-10">
+          <div className="text-4xl mb-4">💬</div>
+          <p className="font-['Outfit'] text-lg text-black mb-6 leading-relaxed">
+            What I mean is <strong>talk up</strong>. My thing is <em>words with meaning</em>, not signals.
+          </p>
+          <button
+            onClick={() => setAppState('APP')}
+            className="bg-black text-white border-4 border-black px-8 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none transition-all"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // --- SPECIAL SUSPENSE SCREEN (Saeed only) ---
